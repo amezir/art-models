@@ -15,6 +15,13 @@
     gap: 20px;
 }
 
+.index_links{
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
 a {
     text-decoration: none;
     color: #ffffff;
