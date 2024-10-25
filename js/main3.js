@@ -27,8 +27,7 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-}
-);
+});
 
 // Load texture
 const textureLoader = new THREE.TextureLoader();
@@ -37,6 +36,10 @@ const artTexture = textureLoader.load('../img/art2-2.png', (texture) => {
     texture.wrapT = THREE.RepeatWrapping;
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.needsUpdate = true;
+
+    // Update plane geometry based on texture size
+    const aspectRatio = texture.image.width / texture.image.height;
+    plane.geometry = new THREE.PlaneGeometry(10 * aspectRatio, 10);
 });
 
 // Vertex Shader
@@ -59,7 +62,7 @@ uniform float u_brightness;
 void main() {
     vec4 color = texture2D(u_texture, vUv);
     if (color.a < 0.1) discard;
-    color.rgb *= u_brightness + 2.5;
+    color.rgb *= u_brightness + 1.;
     gl_FragColor = color;
 }
 `;
@@ -68,7 +71,8 @@ void main() {
 const planeGeometry = new THREE.PlaneGeometry(10, 7);
 const uniforms = {
     u_time: { value: 0.0 },
-    u_texture: { value: artTexture }
+    u_texture: { value: artTexture },
+    u_brightness: { value: 1.0 }
 };
 
 const shaderMaterial = new THREE.ShaderMaterial({
@@ -139,3 +143,24 @@ function animate() {
 }
 
 animate();
+
+document.getElementById('importButton').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const texture = new THREE.TextureLoader().load(e.target.result, (loadedTexture) => {
+                loadedTexture.wrapS = THREE.RepeatWrapping;
+                loadedTexture.wrapT = THREE.RepeatWrapping;
+                loadedTexture.colorSpace = THREE.SRGBColorSpace;
+                loadedTexture.needsUpdate = true;
+                uniforms.u_texture.value = loadedTexture;
+
+                // Update plane geometry based on texture size
+                const aspectRatio = loadedTexture.image.width / loadedTexture.image.height;
+                plane.geometry = new THREE.PlaneGeometry(10 * aspectRatio, 10);
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+});
